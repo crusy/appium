@@ -119,7 +119,7 @@
   },
   "optionalDependencies": {
     "fsevents": "2.x",
-    "heapdump": "0.x"
+    "heapdump": "0.3.11"
   },
   "greenkeeper": {
     "ignore": []
