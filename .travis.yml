@@ -36,10 +36,8 @@ jobs:
         - GENERATE_DOCS=true GITHUB_TOKEN=$TRIAGER_BOT_TOKEN
       before_script:
         - brew install hub
-        - pip install mkdocs==0.16.3
         - git clone https://triager:$TRIAGER_BOT_TOKEN@github.com/appium/appium.git && cd appium
         - git checkout -b generate-docs-$TRAVIS_COMMIT
-        - bundle install
         - npm install
       script:
         - npm run generate-docs
