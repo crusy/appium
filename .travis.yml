@@ -30,13 +30,31 @@ jobs:
       script: npm run test && npm run e2e-test
       node_js: "8"
     - stage:
-      os:
-        - linux
-        - sudo: false
+      os: osx
       env:
         # this is just to indicate in the Travis job list that this is generating docs
-        - GENERATE_DOCS=true
-      script: npm run generate-docs
+        - GENERATE_DOCS=true GITHUB_TOKEN=$TRIAGER_BOT_TOKEN
+      before_script:
+        - brew install hub
+        - pip install mkdocs==0.16.3
+        - git clone https://triager:$TRIAGER_BOT_TOKEN@github.com/appium/appium.git && cd appium
+        - git checkout -b generate-docs-$TRAVIS_COMMIT
+        - bundle install
+        - npm install
+      script:
+        - npm run generate-docs
+        - npm install -g uncommitted
+
+        # If no docs were generated, don't do anything
+        - |
+          if [ !uncommitted ]; then
+            travis_terminate 0
+          fi
+        
+        - git commit -a -n -m 'Update generated docs [ci skip]'
+        - git push origin generate-docs-$TRAVIS_COMMIT
+        - hub pull-request -b "appium:master" -h "appium:generate-docs-$TRAVIS_COMMIT" -m "Update auto-generated docs"
+
     - stage: BinTray Bundle Build and Upload
       # only want to run this on the main master branch
       if: branch = master AND type != pull_request
@@ -63,3 +81,20 @@ jobs:
         # Remove the dev depenedencies
         - npm prune
       script: npm run zip-and-upload
+    - stage: Update Documentation
+      # if: tag # TODO Only run this on tag
+      os: osx
+      env:
+        - HUB_VERBOSE=true GITHUB_TOKEN=$TRIAGER_BOT_TOKEN
+      before_script:
+        - brew install hub
+        - pip install mkdocs==0.16.3
+        - git clone https://triager:$TRIAGER_BOT_TOKEN@github.com/appium/appium.io.git --branch=gh-pages && cd appium.io/
+        - git checkout -b docs-$TRAVIS_TAG
+        - bundle install
+        - npm install
+      script:
+        - npm run build:docs
+        - git commit -a -n -m 'Updated docs for latest Appium version'
+        - git push origin docs-$TRAVIS_TAG
+        - hub pull-request -b "appium:gh-pages" -h "appium:docs-$TRAVIS_TAG" -m "Update documentation for latest version" | exit 0 # The PR command works but always returns non-negative
