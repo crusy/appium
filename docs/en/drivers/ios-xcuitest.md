@@ -75,7 +75,7 @@ dependencies)_
 2. Install the [Carthage](https://github.com/Carthage/Carthage) dependency
    manager:
 
-    ```bash
+    ```
     brew install carthage
     ```
 
